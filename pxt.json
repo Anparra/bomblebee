@@ -1,7 +1,11 @@
 {
     "name": "Bomblebee",
     "dependencies": {
-        "device": "*"
+        "device": "*",
+        "tilemaps": "github:microsoft/pxt-tilemaps#v1.7.1",
+        "color": "*",
+        "palette": "*",
+        "color-coded-tilemap": "*"
     },
     "description": "",
     "files": [
