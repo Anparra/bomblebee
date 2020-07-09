@@ -25,21 +25,6 @@ namespace myTiles {
 . . . . . . . . . . . . . . . . 
 `
 }
-function PC () {
-    KpV = 5
-    currentVelocityX = mySprite.vx
-    desiredVelocityX = 50
-    epVX = desiredVelocityX - currentVelocityX
-    currentVelocityY = mySprite.vy
-    desiredVelocityY = 0
-    epVY = desiredVelocityY - currentVelocityY
-    if (currentVelocityY != desiredVelocityY) {
-        mySprite.vy = 0
-    }
-    if (currentVelocityX < desiredVelocityX) {
-        mySprite.vx = epVX * KpV
-    }
-}
 function showinstructions () {
     game.setDialogFrame(img`
 . . . . . c c c c c c c c c c c c c c . . . . . 
@@ -107,6 +92,9 @@ sprites.onOverlap(SpriteKind.rayD, SpriteKind.Enemy, function (sprite, otherSpri
 controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
     direction = 1
     setSpriteDirection()
+})
+scene.onHitWall(SpriteKind.rayF, function (sprite) {
+    mySprite.setVelocity(40, 70)
 })
 sprites.onOverlap(SpriteKind.rayU, SpriteKind.Enemy, function (sprite, otherSprite) {
     mySprite.setVelocity(40, 70)
@@ -328,11 +316,29 @@ controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
     direction = 0
     setSpriteDirection()
 })
+function PC () {
+    KpV = 5
+    currentVelocityX = mySprite.vx
+    desiredVelocityX = 50
+    epVX = desiredVelocityX - currentVelocityX
+    currentVelocityY = mySprite.vy
+    desiredVelocityY = 0
+    epVY = desiredVelocityY - currentVelocityY
+    if (currentVelocityY != desiredVelocityY) {
+        mySprite.vy = 0
+    }
+    if (currentVelocityX < desiredVelocityX) {
+        mySprite.vx = epVX * KpV
+    }
+}
 function setSpriteDirection () {
     mySprite.setImage(bird[direction])
     mySprite.ax = acceleration * dx[direction]
     mySprite.ay = acceleration * dy[direction]
 }
+scene.onHitWall(SpriteKind.rayU, function (sprite) {
+    mySprite.setVelocity(40, -70)
+})
 controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
     direction = 3
     setSpriteDirection()
@@ -718,6 +724,7 @@ f c c f f f d c e 1 e 1 e 1 f .
 c c f c c c 1 1 e e e e e c . . 
 . . . c c c c c c c c c c . . . 
 `]
+mySprite.setFlag(SpriteFlag.ShowPhysics, true)
 showinstructions()
 setSpriteDirection()
 game.onUpdateInterval(2000, function () {
@@ -766,7 +773,7 @@ game.onUpdateInterval(500, function () {
 . . . . . . . . . d . . . . . . 
 . . . . . . . . d . . . . . . . 
 . . d d d d d d . . . . . . . . 
-`, mySprite, 300, -100)
+`, mySprite, 300, -300)
     rayU.setKind(SpriteKind.rayU)
     rayD = sprites.createProjectileFromSprite(img`
 . . d d d d d d . . . . . . . . 
@@ -785,6 +792,6 @@ game.onUpdateInterval(500, function () {
 . . . . . . . . . d . . . . . . 
 . . . . . . . . d . . . . . . . 
 . . d d d d d d . . . . . . . . 
-`, mySprite, 300, 100)
+`, mySprite, 300, 300)
     rayD.setKind(SpriteKind.rayD)
 })
