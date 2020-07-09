@@ -1,5 +1,8 @@
 namespace SpriteKind {
     export const plants = SpriteKind.create()
+    export const rayF = SpriteKind.create()
+    export const rayU = SpriteKind.create()
+    export const rayD = SpriteKind.create()
 }
 namespace myTiles {
     //% blockIdentity=images._tile
@@ -22,8 +25,20 @@ namespace myTiles {
 . . . . . . . . . . . . . . . . 
 `
 }
-function chooselevel (level: Sprite) {
-	
+function PC () {
+    KpV = 5
+    currentVelocityX = mySprite.vx
+    desiredVelocityX = 50
+    epVX = desiredVelocityX - currentVelocityX
+    currentVelocityY = mySprite.vy
+    desiredVelocityY = 0
+    epVY = desiredVelocityY - currentVelocityY
+    if (currentVelocityY != desiredVelocityY) {
+        mySprite.vy = 0
+    }
+    if (currentVelocityX < desiredVelocityX) {
+        mySprite.vx = epVX * KpV
+    }
 }
 function showinstructions () {
     game.setDialogFrame(img`
@@ -84,9 +99,19 @@ controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
     direction = 2
     setSpriteDirection()
 })
+sprites.onOverlap(SpriteKind.rayD, SpriteKind.Enemy, function (sprite, otherSprite) {
+    mySprite.setVelocity(40, -70)
+    pause(200)
+    PC()
+})
 controller.down.onEvent(ControllerButtonEvent.Pressed, function () {
     direction = 1
     setSpriteDirection()
+})
+sprites.onOverlap(SpriteKind.rayU, SpriteKind.Enemy, function (sprite, otherSprite) {
+    mySprite.setVelocity(40, 70)
+    pause(200)
+    PC()
 })
 function Instructions (text: string) {
     game.showLongText(text, DialogLayout.Bottom)
@@ -288,9 +313,14 @@ c c f f f c c f f f f f c c f f
 1 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
 `, false)
 }
+sprites.onOverlap(SpriteKind.rayF, SpriteKind.Enemy, function (sprite, otherSprite) {
+    mySprite.setVelocity(40, -100)
+    pause(200)
+    PC()
+})
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
     info.changeLifeBy(-1)
-    mySprite.say("honk")
+    mySprite.say("honk", 500)
     music.powerDown.play()
     pause(blurry)
 })
@@ -308,9 +338,19 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
     setSpriteDirection()
 })
 scene.onOverlapTile(SpriteKind.Player, sprites.castle.tilePath5, function (sprite, location) {
-	
+    game.over(true)
 })
+let rayD: Sprite = null
+let rayU: Sprite = null
+let rayF: Sprite = null
 let projectile: Sprite = null
+let epVY = 0
+let desiredVelocityY = 0
+let currentVelocityY = 0
+let epVX = 0
+let desiredVelocityX = 0
+let currentVelocityX = 0
+let KpV = 0
 let bird: Image[] = []
 let dy: number[] = []
 let dx: number[] = []
@@ -319,27 +359,6 @@ let acceleration = 0
 let mySprite: Sprite = null
 let blurry = 0
 let levels = [img`
-1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
-1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 
-1 . . . . . . . . . . . . 7 7 7 7 7 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 
-1 . . . . . . . . . . . . 7 . . . . . 7 . . . . . . . . . . . . . . . . . . 7 7 7 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 
-1 . . . . . . . . . . . . 7 . . . . . . 7 . . . . . . . . . . . . . . . . 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 
-1 . . . . . 7 . . . . . . 7 . . . . . . 7 . . . . . . . . . . . . . . . . 7 . . . . 7 . . . . . . . . . . . . . . . . . . . . . . . . . . 1 
-1 . . . . . 7 . . . . . . 7 . . . . . . 7 . . . . . . . . . . . . . . . . 7 . . . . 7 . . . . . . . . . . . . . . . . . . . . 7 7 . . . . 1 
-1 . . . . . 7 . . . . . . 7 . . . . . . 7 . . . . 7 7 7 7 7 7 7 . . . . . 7 . . . . 7 . . . . . . . . . . . . . . . . . . . . 7 . 7 . . . 1 
-9 . . . . . 7 . . . . . . 7 . . . . . . 7 . . . . 7 . . . . . . . . . . . 7 7 7 . . 7 . . . . . . . . . . . . . . . 7 7 7 7 7 7 . . 7 . . 1 
-9 . . . . . 7 . . . . . . 7 . . . . . . 7 . . . . 7 . . . . . . . . . . 7 . . . . . . 7 . . . . . 7 7 7 7 7 . . . . . . . . . . . . . . . 8 
-9 . . . . . 7 . . . . . . 7 . . . . . 7 . . . . . 7 . . . . . . . . . . 7 . . . . . . 7 . . . . 7 . . . . . . . . . . . . . . . . . . . . 8 
-7 . . . . . 7 . . . . . . 7 7 7 7 7 7 . . . . . . 7 . . . . . . . . . . 7 . . . . . . 7 . . . . 7 . . . . . . . . . . . . . . . . . . . . 8 
-7 . . . . . 7 . . . . . . . . . . . . . . . . . . 7 7 7 7 . . . . . . . 7 . . . . . . 7 . . . . 7 . . . . . . . . . 7 7 7 7 7 7 . . 7 . . 7 
-7 . . . . . 7 . . . . . . . . . . . . . . . . . . 7 . . . . . . . . . . 7 . . . . . . 7 . . . . . 7 7 7 7 7 . . . . . . . . . 7 . 7 . . . 7 
-7 . . . . . 7 . . . . . . . . . . . . . . . . . . 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 . . . . . . . . 7 7 . . . . 7 
-7 . . . . . . . . . . . . . . . . . . . . . . . . 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 . . . . . . . . . . . . . . 7 
-7 . . . . . . . . . . . . . . . . . . . . . . . . 7 7 7 7 7 7 7 . . . . . . . . . . . . . . . . . . . . . . 7 . . . . . . . . . . . . . . 7 
-7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 . . . . . . . . . . . . . . 7 
-7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 7 7 7 7 . . . . . . . . . . . . . . . 7 
-7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
-`, img`
 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
 1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 
 1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 
@@ -359,6 +378,27 @@ let levels = [img`
 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 
 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 
 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 
+7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
+`, img`
+1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 
+1 . . . . . . . . . . . . 7 7 7 7 7 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 
+1 . . . . . . . . . . . . 7 . . . . . 7 . . . . . . . . . . . . . . . . . . 7 7 7 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 
+1 . . . . . . . . . . . . 7 . . . . . . 7 . . . . . . . . . . . . . . . . 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1 
+1 . . . . . 7 . . . . . . 7 . . . . . . 7 . . . . . . . . . . . . . . . . 7 . . . . 7 . . . . . . . . . . . . . . . . . . . . . . . . . . 1 
+1 . . . . . 7 . . . . . . 7 . . . . . . 7 . . . . . . . . . . . . . . . . 7 . . . . 7 . . . . . . . . . . . . . . . . . . . . 7 7 . . . . 1 
+1 . . . . . 7 . . . . . . 7 . . . . . . 7 . . . . 7 7 7 7 7 7 7 . . . . . 7 . . . . 7 . . . . . . . . . . . . . . . . . . . . 7 . 7 . . . 1 
+9 . . . . . 7 . . . . . . 7 . . . . . . 7 . . . . 7 . . . . . . . . . . . 7 7 7 . . 7 . . . . . . . . . . . . . . . 7 7 7 7 7 7 . . 7 . . 1 
+9 . . . . . 7 . . . . . . 7 . . . . . . 7 . . . . 7 . . . . . . . . . . 7 . . . . . . 7 . . . . . 7 7 7 7 7 . . . . . . . . . . . . . . . 8 
+9 . . . . . 7 . . . . . . 7 . . . . . 7 . . . . . 7 . . . . . . . . . . 7 . . . . . . 7 . . . . 7 . . . . . . . . . . . . . . . . . . . . 8 
+7 . . . . . 7 . . . . . . 7 7 7 7 7 7 . . . . . . 7 . . . . . . . . . . 7 . . . . . . 7 . . . . 7 . . . . . . . . . . . . . . . . . . . . 8 
+7 . . . . . 7 . . . . . . . . . . . . . . . . . . 7 7 7 7 . . . . . . . 7 . . . . . . 7 . . . . 7 . . . . . . . . . 7 7 7 7 7 7 . . 7 . . 7 
+7 . . . . . 7 . . . . . . . . . . . . . . . . . . 7 . . . . . . . . . . 7 . . . . . . 7 . . . . . 7 7 7 7 7 . . . . . . . . . 7 . 7 . . . 7 
+7 . . . . . 7 . . . . . . . . . . . . . . . . . . 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 . . . . . . . . 7 7 . . . . 7 
+7 . . . . . . . . . . . . . . . . . . . . . . . . 7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 . . . . . . . . . . . . . . 7 
+7 . . . . . . . . . . . . . . . . . . . . . . . . 7 7 7 7 7 7 7 . . . . . . . . . . . . . . . . . . . . . . 7 . . . . . . . . . . . . . . 7 
+7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 . . . . . . . . . . . . . . 7 
+7 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7 7 7 7 7 . . . . . . . . . . . . . . . 7 
 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 
 `]
 let plants2 = [img`
@@ -688,4 +728,63 @@ game.onUpdateInterval(2000, function () {
 game.onUpdate(function () {
     mySprite.vx = mySprite.vx * 0.97
     mySprite.vy = mySprite.vy * 0.97
+})
+game.onUpdateInterval(500, function () {
+    rayF = sprites.createProjectileFromSprite(img`
+. . d d d d d d . . . . . . . . 
+. . . . . . . . d . . . . . . . 
+. . . . . . . . . d . . . . . . 
+. . . . . . . . . . d . . . . . 
+. . . . . . . . . . . d . . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . d . . . . 
+. . . . . . . . . . d . . . . . 
+. . . . . . . . . d . . . . . . 
+. . . . . . . . d . . . . . . . 
+. . d d d d d d . . . . . . . . 
+`, mySprite, 300, 0)
+    rayF.setKind(SpriteKind.rayF)
+    rayU = sprites.createProjectileFromSprite(img`
+. . d d d d d d . . . . . . . . 
+. . . . . . . . d . . . . . . . 
+. . . . . . . . . d . . . . . . 
+. . . . . . . . . . d . . . . . 
+. . . . . . . . . . . d . . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . d . . . . 
+. . . . . . . . . . d . . . . . 
+. . . . . . . . . d . . . . . . 
+. . . . . . . . d . . . . . . . 
+. . d d d d d d . . . . . . . . 
+`, mySprite, 300, -100)
+    rayU.setKind(SpriteKind.rayU)
+    rayD = sprites.createProjectileFromSprite(img`
+. . d d d d d d . . . . . . . . 
+. . . . . . . . d . . . . . . . 
+. . . . . . . . . d . . . . . . 
+. . . . . . . . . . d . . . . . 
+. . . . . . . . . . . d . . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . . d . . . 
+. . . . . . . . . . . d . . . . 
+. . . . . . . . . . d . . . . . 
+. . . . . . . . . d . . . . . . 
+. . . . . . . . d . . . . . . . 
+. . d d d d d d . . . . . . . . 
+`, mySprite, 300, 100)
+    rayD.setKind(SpriteKind.rayD)
 })
